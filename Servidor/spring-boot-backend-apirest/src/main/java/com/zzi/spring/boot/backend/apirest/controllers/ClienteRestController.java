@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -62,10 +63,9 @@ public class ClienteRestController {
 
 	@PostMapping("/clientes")
 	public ResponseEntity<?> create(@Valid @RequestBody Cliente cliente, BindingResult result) {
-		
 		Cliente clienteNew = null;
 		Map<String, Object> response = new HashMap<>();
-		
+
 		if(result.hasErrors()) {
 			List<String> errors = result.getFieldErrors()
 					.stream()
@@ -79,9 +79,13 @@ public class ClienteRestController {
 		try {
 			clienteNew = clienteService.save(cliente);
 
-		} catch(DataAccessException e) {
+		} /*catch(DataAccessException e) {
 			response.put("mensaje", "Error al realizar el insert en la base de datos.");
 			response.put("error", e.getMessage().concat(": ").concat(e.getMostSpecificCause().getMessage()));
+			return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+		}*/catch(DataAccessException e) {
+			response.put("mensaje", "Error al realizar el insert en la base de datos.");
+			response.put("error", "El correo electrónico proporcionado ya está registrado en la base de datos.");
 			return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		response.put("mensaje", "El cliente ha sido creado de manera exitosa");

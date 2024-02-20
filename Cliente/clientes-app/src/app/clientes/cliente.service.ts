@@ -54,8 +54,10 @@ export class ClienteService {
     )
   }
 
+  
+/* Se comenta ya que se agrega una validación de formato email en éste service.
   update(cliente: Cliente): Observable<Cliente>{
-    return this.http.put(`${this.urlEndPoint}/${cliente.id}`, cliente, {headers: this.httpHeaders}).pipe(
+    return this.http.post(this.urlEndPoint, cliente, {headers: this.httpHeaders}).pipe(
       map((response : any) => response.cliente as Cliente),
       catchError(e =>{
         if (e.status==400) {
@@ -67,6 +69,35 @@ export class ClienteService {
       })
     )
   }
+*/
+//Nuevo update para validación
+update(cliente: Cliente): Observable<Cliente> {
+  // Validar el formato del email antes de enviar la solicitud HTTP
+  if (!this.isValidEmail(cliente.email)) {
+    const errorMessage = 'El formato del email no es válido.';
+    Swal.fire('Error', errorMessage, 'error');
+    return throwError({ status: 400, error: { mensaje: errorMessage } });
+  }
+
+  // Continuar con la solicitud HTTP si la validación es exitosa
+  return this.http.put(`${this.urlEndPoint}/${cliente.id}`, cliente, { headers: this.httpHeaders }).pipe(
+    map((response: any) => response.cliente as Cliente),
+    catchError(e => {
+      if (e.status === 400) {
+        return throwError(() => e);
+      }
+      console.log('Error al editar el cliente:', e);
+      Swal.fire(e.error.mensaje, e.error.error, 'error');
+      return throwError(() => e);
+    })
+  );
+}
+// Función para validar el formato del email
+private isValidEmail(email: string): boolean {
+  // Utiliza una expresión regular para validar el formato del email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
 
   delete(id: number): Observable<Cliente>{
     return this.http.delete<Cliente>(`${this.urlEndPoint}/${id}`, {headers: this.httpHeaders}).pipe(
